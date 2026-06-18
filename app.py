@@ -1,34 +1,41 @@
 import streamlit as st
 import requests
+import xml.etree.ElementTree as ET
 import urllib.parse
 
-# 네이버 API 키 설정
-CLIENT_ID = "Lcd5PPaRdVcTrawgRyUz"
-CLIENT_SECRET = "nHRmT_1qTp"
-
-def get_news(keyword, display_count):
+def get_news_rss(keyword, display_count):
+    # 🌟 [엔진 전면 교체] 네이버 공식 RSS 피드를 활용하여 API 키 없이 무제한 수집
     clean_keyword = keyword.strip()
+    enc_text = urllib.parse.quote(clean_keyword)
     
-    # 🌟 [핵심 개선] 검색어 최적화 시스템
-    # 사용자가 'BC카드'나 '비씨카드'를 검색하면, 띄어쓰기 및 혼용 단어까지 포함하여 
-    # 네이버 API가 기사를 누락 없이 다 가져오도록 'OR' 연산 검색어로 자동 변환합니다.
-    if clean_keyword.replace(" ", "").upper() in ["BC카드", "비씨카드"]:
-        query_text = "BC카드 | BC 카드 | 비씨카드"
-    else:
-        query_text = clean_keyword
-        
-    enc_text = urllib.parse.quote(query_text)
-    url = f"https://openapi.naver.com/v1/search/news.json?query={enc_text}&display={display_count}&sort=date"
-    
-    headers = {
-        "X-Naver-Client-Id": CLIENT_ID,
-        "X-Naver-Client-Secret": CLIENT_SECRET
-    }
+    # 네이버 뉴스 RSS 주소 구성
+    url = f"https://news.naver.com/rss?rss=news&query={enc_text}"
     
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, timeout=5)
         if response.status_code == 200:
-            return response.json().get('items', [])
+            # XML 데이터 파싱
+            root = ET.fromstring(response.content)
+            items = root.findall('.//item')
+            
+            articles = []
+            for item in items[:display_count]:
+                title = item.find('title').text if item.find('title') is not None else ''
+                description = item.find('description').text if item.find('description') is not None else ''
+                link = item.find('link').text if item.find('link') is not None else ''
+                pub_date = item.find('pubDate').text if item.find('pubDate') is not None else ''
+                
+                # HTML 태그 제거 및 텍스트 정제
+                title = title.replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&')
+                description = description.replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&')
+                
+                articles.append({
+                    'title': title,
+                    'description': description,
+                    'link': link,
+                    'pubDate': pub_date
+                })
+            return articles
     except Exception:
         return []
     return []
@@ -37,7 +44,7 @@ def get_news(keyword, display_count):
 st.set_page_config(page_title="실시간 뉴스 모니터링", layout="wide")
 
 st.title("📰 멀티 키워드 실시간 뉴스 모니터링")
-st.caption("여러 키워드를 동시에 추적하고 팀원들과 공유하는 대시보드입니다.")
+st.caption("API 키 제한 없이 365일 언제나 실시간 뉴스를 추적하는 팀 대시보드입니다.")
 
 # 사이드바 설정
 st.sidebar.header("🔍 모니터링 설정")
@@ -56,22 +63,17 @@ if keywords:
     for idx, keyword in enumerate(keywords):
         with tabs[idx]:
             st.subheader(f"🔥 '{keyword}' 최신 뉴스")
-            articles = get_news(keyword, display_count)
+            articles = get_news_rss(keyword, display_count)
             
             if articles:
                 for a_idx, article in enumerate(articles, 1):
-                    title = article['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&')
-                    description = article['description'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&')
-                    link = article['originallink'] or article['link']
-                    pub_date = article['pubDate']
-                    
                     with st.container():
-                        st.markdown(f"#### {a_idx}. {title}")
-                        st.caption(f"📅 {pub_date}")
-                        st.write(f":small[{description}]")
-                        st.markdown(f"[🔗 기사 원문 보러가기]({link})")
+                        st.markdown(f"#### {a_idx}. {article['title']}")
+                        st.caption(f"📅 {article['pubDate']}")
+                        st.write(f":small[{article['description']}]")
+                        st.markdown(f"[🔗 기사 원문 보러가기]({article['link']})")
                         st.write("---")
             else:
-                st.info(f"💡 '{keyword}'에 대한 최근 뉴스가 없거나, 검색어 형식을 확인해 주세요.")
+                st.info(f"💡 '{keyword}'에 대한 최신 뉴스를 불러오는 중이거나 현재 조건에 맞는 기사가 없습니다. 사이드바의 업데이트 버튼을 눌러보세요.")
 else:
     st.info("왼쪽 사이드바에 키워드를 입력해 주세요.")
