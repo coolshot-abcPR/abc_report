@@ -3,8 +3,8 @@ import requests
 import urllib.parse
 
 # [필수 변경] 발급받은 네이버 API 키를 입력하세요
-CLIENT_ID = "YOUR_CLIENT_ID"
-CLIENT_SECRET = "YOUR_CLIENT_SECRET"
+CLIENT_ID = "Lcd5PPaRdVcTrawgRyUz"
+CLIENT_SECRET = "nHRmT_lqTp"
 
 def get_news(keyword, display_count):
     enc_text = urllib.parse.quote(keyword)
