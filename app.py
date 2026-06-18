@@ -26,7 +26,7 @@ st.caption("여러 키워드를 동시에 추적하고 팀원들과 공유하는
 # 사이드바 설정
 st.sidebar.header("🔍 모니터링 설정")
 # 쉼표로 구분하여 여러 키워드를 입력받음
-raw_keywords = st.sidebar.text_input("추적할 키워드들 (쉼표로 구분)", value="2차전지, 자율주행, 반도체")
+raw_keywords = st.sidebar.text_input("추적할 키워드들 (쉼표로 구분)", value="bc카드, 비씨카드, kt")
 display_count = st.sidebar.slider("키워드당 기사 개수", min_value=5, max_value=30, value=10)
 
 if st.sidebar.button("🔄 뉴스 실시간 업데이트"):
