@@ -2,9 +2,9 @@ import streamlit as st
 import requests
 import urllib.parse
 
-# [필수 변경] 발급받은 네이버 API 키를 입력하세요
+# 네이버 API 키 설정
 CLIENT_ID = "Lcd5PPaRdVcTrawgRyUz"
-CLIENT_SECRET = "nHRmT_lqTp"
+CLIENT_SECRET = "nHRmT_1qTp"
 
 def get_news(keyword, display_count):
     enc_text = urllib.parse.quote(keyword)
@@ -21,41 +21,14 @@ def get_news(keyword, display_count):
 # --- 웹 화면 구성 ---
 st.set_page_config(page_title="실시간 뉴스 모니터링", layout="wide")
 
-# ✨ [디자인 설정] 글씨 크기를 전체적으로 작게 만드는 비밀 코드
-st.markdown("""
-    <style>
-    /* 전체 본문 글씨 크기 조절 */
-    html, body, [data-testid="stWidgetLabel"], .stMarkdown p {
-        font-size: 14px !important;
-    }
-    /* 뉴스 제목 글씨 크기 조절 */
-    .news-title {
-        font-size: 17px !important;
-        font-weight: bold !important;
-        margin-bottom: 2px !important;
-    }
-    /* 날짜 글씨 크기 조절 */
-    .news-date {
-        font-size: 11px !important;
-        color: #888888 !important;
-    }
-    /* 뉴스 설명 글씨 크기 조절 */
-    .news-desc {
-        font-size: 13px !important;
-        color: #333333 !important;
-        line-height: 1.5 !important;
-    }
-    </style>
-    """, unsafe_check_html=True)
-
 st.title("📰 멀티 키워드 실시간 뉴스 모니터링")
 st.caption("여러 키워드를 동시에 추적하고 팀원들과 공유하는 대시보드입니다.")
 
 # 사이드바 설정
 st.sidebar.header("🔍 모니터링 설정")
-raw_keywords = st.sidebar.text_input("추적할 키워드들 (쉼표로 구분)", value="2차전지, 자율주행, 반도체")
+raw_keywords = st.sidebar.text_input("추적할 키워드들 (쉼표로 구분)", value="BC카드, 비씨카드, KT")
 
-# ✨ 기본 가져올 기사 개수를 10개에서 30개로 늘렸습니다! (최대 50개까지 조절 가능)
+# 기본 출력 개수를 30개로 상향 조정 완료!
 display_count = st.sidebar.slider("키워드당 기사 개수", min_value=5, max_value=50, value=30)
 
 if st.sidebar.button("🔄 뉴스 실시간 업데이트"):
@@ -74,16 +47,18 @@ if keywords:
             
             if articles:
                 for a_idx, article in enumerate(articles, 1):
+                    # 검색어 하이라이트 태그 제거 및 텍스트 정제
                     title = article['title'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&')
                     description = article['description'].replace('<b>', '').replace('</b>', '').replace('&quot;', '"').replace('&amp;', '&')
                     link = article['originallink'] or article['link']
                     pub_date = article['pubDate']
                     
-                    # ✨ 작아진 폰트 스타일을 적용해서 뉴스 출력
+                    # 🌟 [에러 해결 및 폰트 축소] 
+                    # 에러를 유발하던 HTML 대신 Streamlit 공식 스몰 폰트(small) 및 캡션 기능 활용
                     with st.container():
-                        st.markdown(f"<div class='news-title'>[{a_idx}] {title}</div>", unsafe_check_html=True)
-                        st.markdown(f"<div class='news-date'>📅 {pub_date}</div>", unsafe_check_html=True)
-                        st.markdown(f"<div class='news-desc'>{description}</div>", unsafe_check_html=True)
+                        st.markdown(f"#### {a_idx}. {title}") # 제목 크기 한 단계 축소
+                        st.caption(f"📅 {pub_date}") # 날짜 아주 작게 표시
+                        st.write(f":small[{description}]") # 본문 글씨 크기 축소 적용
                         st.markdown(f"[🔗 기사 원문 보러가기]({link})")
                         st.write("---")
             else:
